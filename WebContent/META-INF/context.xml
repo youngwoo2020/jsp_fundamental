@@ -6,7 +6,7 @@
                  type="javax.sql.DataSource"
                  driverClassName="org.mariadb.jdbc.Driver"
                  url="jdbc:mariadb://localhost/kpc?autoReconnect=true"
-                 username="kpc12"
+                 username="kpc13"
                  password="kpc1212"
                  maxActive="7"
                  maxIdle="4"
