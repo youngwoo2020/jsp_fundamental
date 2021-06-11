@@ -20,13 +20,20 @@
 	cPage = 1   -> 0  , 10;
 	cPage = 2   -> 10 , 10;
 	cPage = 3   -> 20 , 10;
+	start = 0, 10, 20 , displayCount : 10;
+	An = a1 + (n-1)*d   -> a1 =0;, n->cPage, d: displayCount
 	*/
-	int displayCount = 3;
-	int pageDisplayCount = 4;
+	int displayCount = 4;
+	int pageDispalyCount = 3;
+	int totalRows = 0;//128
+	int currentBlock = 0;
+	int totalBlock = 0;
+	int totalPage = 0;
+	int startPage = 0;
+	int endPage = 0;
 	int start = 0 + (cPage-1)*displayCount;
 	NoticeDao dao = NoticeDao.getInstance();
-	ArrayList<NoticeDto> list = 
-			dao.select(start, displayCount);
+	ArrayList<NoticeDto> list = dao.select(start, displayCount);
 	
 %>
   	<!-- breadcrumb start -->
@@ -47,14 +54,12 @@
 				<h5>공지사항 리스트</h5>
 				<div class="table-responsive">
 				<table class="table table-hover">
-				<colgroup>
-				<col width="10%">
-				<col width="10%">
-				<col width="65%">
-				<col width="15%">
-			
-				
-				</colgroup>
+				  <colgroup>
+				  	<col width="10%">
+				  	<col width="10%">
+				  	<col width="65%">
+				  	<col width="15%">
+				  </colgroup>
 				  <thead>
 				    <tr>
 				      <th scope="col">번호</th>
@@ -71,7 +76,7 @@
 				    <tr>
 				      <th scope="row"><%=dto.getNum() %></th>
 				      <td><%=dto.getWriter() %></td>
-				      <td><a href="view.jsp"><%=dto.getTitle() %></a></td>
+				      <td><a href="view.jsp?num=<%=dto.getNum()%>&page=<%=cPage%>"><%=dto.getTitle() %></a></td>
 				      <td><%=dto.getRegdate() %></td>
 				    </tr>
 				  <%	
@@ -85,86 +90,75 @@
 				  </tbody>
 				</table>
 				<%--Pagination start --%>
-		<%
-	/*총 rows가 128개, displayCount가 10개라면?
-		Previus 1 2 3 4 5 6 7 8 9 10 next	=> currentBlock : 1block 
-		previous 11 12 13 next				=> currentBlock : 2block 			
-	*/			
-		int totalRows = dao.getRows(); 
-		int currentBlock = 0;
-		int totalBlock = 0;
-		int totalPage = 0;
-		int startPage = 0;
-		int endPage = 0;
+	<%
+		/*
+			총 rows 128개, displayCount 10개 가정
+			Previous 1 2 3 4 5 6 7 8 9 10 Next => currentBlock : 1 block
+			Previous 11 12 13 Next			   => currentBlock : 2 block
+		*/
 		
-		if(totalRows%displayCount==0 ){
+		totalRows = dao.getRows(); //128;
+		if(totalRows%displayCount==0){
 			totalPage = totalRows/displayCount;
 		}else{
-			totalPage = totalRows/displayCount+1;
+			totalPage = totalRows/displayCount + 1;
 		}
 		
-		
-		
-		
-		
-		/*totalPage = totalRows%displayCount==0? totalRows/displayCount : totalRows/displayCount+1;*/
-		if(totalPage ==0){
+		/*
+		totalPage = (totalRows%displayCount==0) ? 
+					totalRows/displayCount : 
+					totalRows/displayCount + 1 ;
+		*/
+		if(totalPage == 0){
 			totalPage = 1;
 		}
-		/*cPage : 1-10 -> currentBlock : 1
-		cPage : 11-20 -> currentBlock : 2
 		
-		*/
-		if(cPage%pageDisplayCount==0){
-			currentBlock = cPage/pageDisplayCount;
-		}else{
-			currentBlock = cPage/pageDisplayCount+1;
+		if(cPage%pageDispalyCount == 0){
+			currentBlock = cPage/pageDispalyCount;
+		}else {
+			currentBlock = cPage/pageDispalyCount +1;
+		}
 			
+		if(totalPage%pageDispalyCount == 0){
+			totalBlock = totalPage/pageDispalyCount;
+		}else {
+			totalBlock = totalPage/pageDispalyCount +1;
 		}
+		/*
+		cPage : 1-10  -> currentBlock : 1
+		cPage : 11-20 -> currentBlock : 2
+		.....
+		startPage : 1, 11, 20
+		endPage : 10, 20, 30
+		*/
+		startPage = 1 + (currentBlock -1)*pageDispalyCount;
+		endPage = pageDispalyCount + (currentBlock -1)*pageDispalyCount;
 		
-		if(totalPage%pageDisplayCount==0){
-			totalBlock = totalPage/pageDisplayCount;
-		}else{
-			totalBlock = totalPage/pageDisplayCount+1;
+		if(currentBlock == totalBlock){
+			endPage = totalPage;
 		}
-		
-		 startPage =1+ (currentBlock-1)*pageDisplayCount;
-		 endPage = pageDisplayCount+(currentBlock-1)*pageDisplayCount;
-		 if(totalBlock==currentBlock){
-			 endPage = totalPage;
-		 }
-		
-%>
+	%>
 				<nav aria-label="Page navigation example">
 				  <ul class="pagination justify-content-center">
-				  <% if(currentBlock ==1 ){ %>
-				  
-				  
-				    <li class="page-item disabled">
-				      <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+				    
+				    <li class="page-item <%if(currentBlock==1){ %>disabled<%}%>">
+				      <a class="page-link" href="<%=startPage+1%>" tabindex="-1" aria-disabled="true">Previous</a>
 				    </li>
-				    <%}else{ %>
-				    <li class="page-item ">
-				      <a class="page-link" href="list.jsp?page=<%=startPage-1%>" tabindex="-1" aria-disabled="true">Previous</a>
-				    </li>
-				    <%} %>
-				 <% for(int i = startPage; i <=endPage;i++) {%>
+				    
+				    <%for(int i=startPage;i<=endPage;i++){ %>
 				    <li class="page-item"><a class="page-link" href="list.jsp?page=<%=i%>"><%=i %></a></li>
-				 <% }%>
-				 <%if(totalBlock==currentBlock){ %>
-				    <li class="page-item  disabled">
-				      <a class="page-link" href="#">Next</a>
-				    </li>
-				    <%}else{ %>
-				     <li class="page-item">
+				    <%} %>
+				
+				    <li class="page-item <%if(totalBlock==currentBlock){ %> disabled<%}%>">
 				      <a class="page-link" href="list.jsp?page=<%=endPage+1%>">Next</a>
 				    </li>
-				    <%} %>
+				   
+				   
 				  </ul>
 				</nav>
 				<%--Pagination end --%>
 				<div class="text-right">
-					<a class="btn btn-success" href="write.jsp" role="button">글쓰기</a>
+					<a class="btn btn-success" href="write.jsp?page=<%=cPage %>" role="button">글쓰기</a>
 				</div>
 				</div>
 				<%-- table end--%>
@@ -174,4 +168,6 @@
 	</div>
 	<!-- container end -->
 <%@ include file="../inc/footer.jsp" %>
+	
+
 	
